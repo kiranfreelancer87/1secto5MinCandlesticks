@@ -18,7 +18,7 @@ endpoint = "wss://nimblewebstream.lisuns.com:4576/"
 apikey = "6d3bad57-0e07-42d1-8255-87d1bb09c06c"
 
 tickList = {}
-inputPath = 'data_2'
+inputPath = str(datetime.datetime.now()).split(" ")[0]
 
 
 def Authenticate(ws):
@@ -26,10 +26,15 @@ def Authenticate(ws):
 
 
 def SubscribeRealtime(ws):
-    symbols = ['RELIANCE', 'HDFC', 'SBIN', 'NIFTY']
+    symbols = str(open('symbols.txt').read()).split("\n")
 
     for j in range(len(symbols)):
+
         Exchange = "NSE"
+
+        if 'NIFTY' in symbols[j]:
+            Exchange = "NSE_IDX"
+
         InstIdentifier = symbols[j]
         Unsubscribe = False
         payload_ = {'MessageType': 'SubscribeRealtime', 'Exchange': Exchange, 'Unsubscribe': Unsubscribe,
@@ -83,6 +88,8 @@ def ProcessData(msg):
     tickList[msg['InstrumentIdentifier']] = []
     tickList[msg['InstrumentIdentifier']].append(currentTickObject)
 
+    print(msg)
+
     save_path = "{}/{}_tick_data.csv".format(inputPath, str(msg['InstrumentIdentifier']))
     if exists(save_path):
         print("{}::::::{}".format(len(tickList[str(msg['InstrumentIdentifier'])]), str(msg['InstrumentIdentifier'])))
@@ -105,12 +112,8 @@ def on_message(ws, message):
     global tickList
     global count
 
-    if len(str(message)) > 1000:
-        with open('test.txt', 'w') as tf:
-            tf.write(str(message))
-        tf.close()
-
     try:
+        print(message)
         msg = json.loads(message)
         if 'Complete' in msg and 'MessageType' and msg and msg['MessageType'] == 'AuthenticateResult':
             print("Authentication Completed")
@@ -124,7 +127,7 @@ def on_message(ws, message):
         '''if 'Result' in msg and 'Request' in msg:
             instrument = msg['Request']['InstrumentIdentifier']
             result = msg['Result']
-            print(pd.DataFrame(result).to_csv("data/{}.csv".format(instrument)))
+            print(pd.DataFrame(result).to_csv("2023-04-04/{}.csv".format(instrument)))
             if currentPos == len(instruments):
                 currentPos = 0
             GetHistory(ws, instruments[currentPos])
